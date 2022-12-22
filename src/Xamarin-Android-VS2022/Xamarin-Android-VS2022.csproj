@@ -121,6 +121,12 @@
     <PackageReference Include="Xamarin.Google.Android.Material" Version="1.0.0.1" />
     <PackageReference Include="Xamarin.Essentials" Version="1.6.1" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Xamarin-Android-VS2022.EFCore2\Xamarin-Android-VS2022.EFCore2\Xamarin-Android-VS2022.EFCore2.csproj">
+      <Project>{2a1cf6ce-d311-489b-a27c-c25ac9af97a0}</Project>
+      <Name>Xamarin-Android-VS2022.EFCore2</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
     Other similar extension points exist, see Microsoft.Common.targets.
