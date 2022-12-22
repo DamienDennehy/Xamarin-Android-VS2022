@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Threading.Tasks;
 using Android.App;
 using Android.OS;
 using Android.Runtime;
@@ -10,6 +12,8 @@ using AndroidX.DrawerLayout.Widget;
 using Google.Android.Material.FloatingActionButton;
 using Google.Android.Material.Navigation;
 using Google.Android.Material.Snackbar;
+using Microsoft.EntityFrameworkCore;
+using Xamarin_Android_VS2022.EFCore2;
 
 namespace Xamarin_Android_VS2022
 {
@@ -68,9 +72,28 @@ namespace Xamarin_Android_VS2022
 
         private void FabOnClick(object sender, EventArgs eventArgs)
         {
-            View view = (View) sender;
-            Snackbar.Make(view, "Replace with your own action", Snackbar.LengthLong)
-                .SetAction("Action", (Android.Views.View.IOnClickListener)null).Show();
+            //Switch to background thread.
+            Task.Run(async () =>
+            {
+                try
+                {
+                    var count = await AddAppSettingAsync();
+
+                    RunOnUiThread(() =>
+                    {
+                        View view = (View)sender;
+                        Snackbar.Make(view, $"{count} AppSetting(s) in DB.", Snackbar.LengthLong)
+                            .SetAction("Action", (View.IOnClickListener)null).Show();
+                    });
+                }
+                catch (Exception ex)
+                {
+                    RunOnUiThread(() =>
+                    {
+                        Android.Widget.Toast.MakeText(this, ex.Message, Android.Widget.ToastLength.Long).Show();
+                    });
+                }
+            });
         }
 
         public bool OnNavigationItemSelected(IMenuItem item)
@@ -111,6 +134,29 @@ namespace Xamarin_Android_VS2022
             Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
 
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+
+        private async Task<int> AddAppSettingAsync()
+        {
+            var dbFilepath = Path.Combine(Xamarin.Essentials.FileSystem.AppDataDirectory, "EFCore2.db");
+            var optionsBuilder = new DbContextOptionsBuilder<EFCore2Context>();
+            optionsBuilder.UseSqlite($"Filename={dbFilepath}");
+
+            using (var context = new EFCore2Context(optionsBuilder.Options))
+            {
+                await context.Database.EnsureCreatedAsync();
+
+                var appSetting = new AppSetting
+                {
+                    Key = Guid.NewGuid().ToString(),
+                    Value = Guid.NewGuid().ToString()
+                };
+
+                context.AppSettings.Add(appSetting);
+                await context.SaveChangesAsync();
+
+                return await context.AppSettings.CountAsync();
+            }
         }
     }
 }
